@@ -37,7 +37,9 @@
 #import <CommonCrypto/CommonHMAC.h> //for kCCHmacAlgSHA256
 #import <CommonCrypto/CommonDigest.h> //for CC_SHA256_DIGEST_LENGTH
 #import "DIOSConnect.h"
-#import "ASIHTTPRequest.h"
+// #import "ASIHTTPRequest.h"
+#import "Three20/Three20.h"
+#import "Three20Core/NSStringAdditions.h"
 #import "ASIFormDataRequest.h"
 #import "NSData+Base64.h"
 @implementation DIOSConnect
@@ -123,6 +125,24 @@
 	}
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)requestDidStartLoad:(TTURLRequest*)request {
+    // [_requestButton setTitle:@"Loading..." forState:UIControlStateNormal];
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)requestDidFinishLoad:(TTURLRequest*)request {
+    TTURLDataResponse* dataResponse = (TTURLDataResponse*)request.response;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)request:(TTURLRequest*)request didFailLoadWithError:(NSError*)error {
+    // [_requestButton setTitle:@"Failed to load, try again." forState:UIControlStateNormal];
+}
+
+
 //This runs our method and actually gets a response from drupal
 -(void) runMethod {
 	[self setError:nil];
@@ -145,66 +165,81 @@
 	
 	NSString *url = [NSString stringWithFormat:@"%@/%@", DRUPAL_SERVICES_URL, [self method]];
 	
-	ASIHTTPRequest *requestBinary = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:url]];
+	// ASIHTTPRequest *requestBinary = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:url]];
+    TTURLRequest *requestBinary = [TTURLRequest requestWithURL:url delegate:self];
+    
 	NSString *errorStr;
 	NSData *dataRep = [NSPropertyListSerialization dataFromPropertyList: [self params]
 																 format: NSPropertyListBinaryFormat_v1_0
 													   errorDescription: &errorStr];
-	[requestBinary appendPostData:dataRep];
-	[requestBinary addRequestHeader:@"Content-Type" value:@"application/plist"];
-	[requestBinary addRequestHeader:@"Accept" value:@"application/plist"];
-  [requestBinary setUploadProgressDelegate:progressDelegate];
-	[requestBinary startSynchronous];
 	
-	[self setError:[requestBinary error]];
+    requestBinary.httpBody = dataRep;
+    [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Content-Type"];
+    [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Accept"];
+    
+    requestBinary.response = [[[TTURLDataResponse alloc] init] autorelease];
+    
+    // [requestBinary.delegates addObject:progressDelegate];
+    [requestBinary sendSynchronously];
+                                   
+//    [requestBinary appendPostData:dataRep];
+//	[requestBinary addRequestHeader:@"Content-Type" value:@"application/plist"];
+//	[requestBinary addRequestHeader:@"Accept" value:@"application/plist"];
+//    [requestBinary setUploadProgressDelegate:progressDelegate];
+//	[requestBinary startSynchronous];
 	
-	if (!error) {
-		NSData *response = [requestBinary responseData];
-		
-		NSPropertyListFormat format;
-		id plist = nil;
-		
-		[self setResponseStatusMessage:[requestBinary responseStatusMessage]];
-		
-		if(response != nil) {
-			plist = [NSPropertyListSerialization propertyListFromData:response
-													 mutabilityOption:NSPropertyListMutableContainersAndLeaves
-															   format:&format
-													 errorDescription:&errorStr];
-      if (errorStr) {
-        NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
-                                         code:1 
-                                     userInfo:[NSDictionary dictionaryWithObject:errorStr forKey:NSLocalizedDescriptionKey]];
-        [self setError:e];
-      }
-		} else {
-			NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
-											 code:1 
-										 userInfo:[NSDictionary dictionaryWithObject:@"I couldnt get a response, is the site down?" forKey:NSLocalizedDescriptionKey]];
-			[self setError:e];
-		}
-		if (plist && !error) {
-			[self setConnResult:plist];
-			if([[self method] isEqualToString:@"system.connect"]) {
-				if(plist != nil) {
-					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
-					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
-				}
-			}
-			if([[self method] isEqualToString:@"user.login"]) {
-				if(plist != nil) {
-					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
-					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
-				}
-			}
-			if([[self method] isEqualToString:@"user.logout"]) {
-				if(plist != nil) {
-					[self setSessid:nil];
-					[self setUserInfo:nil];
-				}
-			}
-		}
-	}
+	// [self setError:[requestBinary error]];
+	
+	// if (!error) {
+//    TTURLDataResponse *dataResponse = requestBinary.response;
+//        NSData *response = dataResponse.data;
+//        
+//		// NSData *response = [requestBinary responseData];
+//		
+//		NSPropertyListFormat format;
+//		id plist = nil;
+//		
+//		// [self setResponseStatusMessage:[requestBinary responseStatusMessage]];
+//		
+//		if(response != nil) {
+//			plist = [NSPropertyListSerialization propertyListFromData:response
+//													 mutabilityOption:NSPropertyListMutableContainersAndLeaves
+//															   format:&format
+//													 errorDescription:&errorStr];
+//      if (errorStr) {
+//        NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
+//                                         code:1 
+//                                     userInfo:[NSDictionary dictionaryWithObject:errorStr forKey:NSLocalizedDescriptionKey]];
+//        [self setError:e];
+//      }
+//		} else {
+//			NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
+//											 code:1 
+//										 userInfo:[NSDictionary dictionaryWithObject:@"I couldnt get a response, is the site down?" forKey:NSLocalizedDescriptionKey]];
+//			[self setError:e];
+//		}
+//		if (plist && !error) {
+//			[self setConnResult:plist];
+//			if([[self method] isEqualToString:@"system.connect"]) {
+//				if(plist != nil) {
+//					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+//					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+//				}
+//			}
+//			if([[self method] isEqualToString:@"user.login"]) {
+//				if(plist != nil) {
+//					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+//					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+//				}
+//			}
+//			if([[self method] isEqualToString:@"user.logout"]) {
+//				if(plist != nil) {
+//					[self setSessid:nil];
+//					[self setUserInfo:nil];
+//				}
+//			}
+//		}
+//	// }
 	
 	
 	//Bug in ASIHTTPRequest, put here to stop activity indicator
