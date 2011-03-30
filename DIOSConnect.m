@@ -174,6 +174,9 @@
 													   errorDescription: &errorStr];
 	
     requestBinary.httpBody = dataRep;
+    requestBinary.httpMethod = @"POST";
+    requestBinary.shouldHandleCookies = NO;
+    [requestBinary setValue:@"deflate" forHTTPHeaderField:@"Accept-Encoding"];
     [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Content-Type"];
     [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Accept"];
     
