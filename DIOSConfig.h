@@ -41,7 +41,7 @@
 #include "TargetConditionals.h"
 #endif
 
-#define STAGE
+#define DEV
 
 #ifdef STAGE
 

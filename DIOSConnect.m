@@ -125,21 +125,69 @@
 	}
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)requestDidStartLoad:(TTURLRequest*)request {
-    // [_requestButton setTitle:@"Loading..." forState:UIControlStateNormal];
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)requestDidFinishLoad:(TTURLRequest*)request {
     TTURLDataResponse* dataResponse = (TTURLDataResponse*)request.response;
+    NSString *errorStr;
+    
+    error = NO;
+    
+    if (!error) {
+        NSData *response = dataResponse.data;
+        
+		// NSData *response = [requestBinary responseData];
+		
+		NSPropertyListFormat format;
+		id plist = nil;
+		
+		// [self setResponseStatusMessage:[requestBinary responseStatusMessage]];
+		
+		if(response != nil) {
+			plist = [NSPropertyListSerialization propertyListFromData:response
+													 mutabilityOption:NSPropertyListMutableContainersAndLeaves
+															   format:&format
+													 errorDescription:&errorStr];
+            if (errorStr) {
+                NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
+                                                 code:1 
+                                             userInfo:[NSDictionary dictionaryWithObject:errorStr forKey:NSLocalizedDescriptionKey]];
+                [self setError:e];
+            }
+            
+        } else {
+            NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
+											 code:1 
+										 userInfo:[NSDictionary dictionaryWithObject:@"I couldnt get a response, is the site down?" forKey:NSLocalizedDescriptionKey]];
+            [self setError:e];
+        }
+        
+        if (plist && !error) {
+			[self setConnResult:plist];
+			if([[self method] isEqualToString:@"system.connect"]) {
+				if(plist != nil) {
+					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+				}
+			}
+			if([[self method] isEqualToString:@"user.login"]) {
+				if(plist != nil) {
+					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+				}
+			}
+			if([[self method] isEqualToString:@"user.logout"]) {
+				if(plist != nil) {
+					[self setSessid:nil];
+					[self setUserInfo:nil];
+				}
+			}
+		}
+    }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-- (void)request:(TTURLRequest*)request didFailLoadWithError:(NSError*)error {
-    // [_requestButton setTitle:@"Failed to load, try again." forState:UIControlStateNormal];
+- (void)request:(TTURLRequest*)request didFailLoadWithError:(NSError*)err {
+    [self setError:err];
 }
 
 
@@ -165,7 +213,6 @@
 	
 	NSString *url = [NSString stringWithFormat:@"%@/%@", DRUPAL_SERVICES_URL, [self method]];
 	
-	// ASIHTTPRequest *requestBinary = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:url]];
     TTURLRequest *requestBinary = [TTURLRequest requestWithURL:url delegate:self];
     
 	NSString *errorStr;
@@ -173,10 +220,9 @@
 																 format: NSPropertyListBinaryFormat_v1_0
 													   errorDescription: &errorStr];
 	
-    requestBinary.httpBody = dataRep;
     requestBinary.httpMethod = @"POST";
-    requestBinary.shouldHandleCookies = NO;
-    [requestBinary setValue:@"deflate" forHTTPHeaderField:@"Accept-Encoding"];
+    requestBinary.httpBody = dataRep;
+//    [requestBinary setValue:@"deflate" forHTTPHeaderField:@"Accept-Encoding"]; //<- only deflate seems to work on this server with NSURLRequest
     [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Content-Type"];
     [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Accept"];
     
@@ -184,70 +230,6 @@
     
     // [requestBinary.delegates addObject:progressDelegate];
     [requestBinary sendSynchronously];
-                                   
-//    [requestBinary appendPostData:dataRep];
-//	[requestBinary addRequestHeader:@"Content-Type" value:@"application/plist"];
-//	[requestBinary addRequestHeader:@"Accept" value:@"application/plist"];
-//    [requestBinary setUploadProgressDelegate:progressDelegate];
-//	[requestBinary startSynchronous];
-	
-	// [self setError:[requestBinary error]];
-	
-	// if (!error) {
-//    TTURLDataResponse *dataResponse = requestBinary.response;
-//        NSData *response = dataResponse.data;
-//        
-//		// NSData *response = [requestBinary responseData];
-//		
-//		NSPropertyListFormat format;
-//		id plist = nil;
-//		
-//		// [self setResponseStatusMessage:[requestBinary responseStatusMessage]];
-//		
-//		if(response != nil) {
-//			plist = [NSPropertyListSerialization propertyListFromData:response
-//													 mutabilityOption:NSPropertyListMutableContainersAndLeaves
-//															   format:&format
-//													 errorDescription:&errorStr];
-//      if (errorStr) {
-//        NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
-//                                         code:1 
-//                                     userInfo:[NSDictionary dictionaryWithObject:errorStr forKey:NSLocalizedDescriptionKey]];
-//        [self setError:e];
-//      }
-//		} else {
-//			NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
-//											 code:1 
-//										 userInfo:[NSDictionary dictionaryWithObject:@"I couldnt get a response, is the site down?" forKey:NSLocalizedDescriptionKey]];
-//			[self setError:e];
-//		}
-//		if (plist && !error) {
-//			[self setConnResult:plist];
-//			if([[self method] isEqualToString:@"system.connect"]) {
-//				if(plist != nil) {
-//					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
-//					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
-//				}
-//			}
-//			if([[self method] isEqualToString:@"user.login"]) {
-//				if(plist != nil) {
-//					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
-//					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
-//				}
-//			}
-//			if([[self method] isEqualToString:@"user.logout"]) {
-//				if(plist != nil) {
-//					[self setSessid:nil];
-//					[self setUserInfo:nil];
-//				}
-//			}
-//		}
-//	// }
-	
-	
-	//Bug in ASIHTTPRequest, put here to stop activity indicator
-	UIApplication* app = [UIApplication sharedApplication];
-	app.networkActivityIndicatorVisible = NO;
 }
 
 - (void) setMethod:(NSString *)aMethod {
