@@ -40,9 +40,11 @@
 @interface DIOSUser : DIOSConnect {
 
 }
-- (NSDictionary *) loginWithUsername:(NSString*)userName andPassword:(NSString*)password;
-- (NSDictionary *) logout;
-- (NSDictionary *) userSave:(NSMutableDictionary *)userDict;
-- (NSDictionary *) userDelete:(NSString*)uid;
-- (NSDictionary *) userGet:(NSString*)uid;
+
+- (TTURLRequest *) loginWithUsername:(NSString*)userName andPassword:(NSString*)password delegate:(id<TTURLRequestDelegate>) delegate;
+- (TTURLRequest *) logout:(id<TTURLRequestDelegate>) delegate;
+- (TTURLRequest *) userSave:(NSMutableDictionary *)userDict delegate:(id<TTURLRequestDelegate>) delegate;
+- (TTURLRequest *) userDelete:(NSString*)uid:(id<TTURLRequestDelegate>) delegate;
+- (TTURLRequest *) userGet:(NSString*)uid:(id<TTURLRequestDelegate>) delegate;
+
 @end

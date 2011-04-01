@@ -78,4 +78,9 @@
 - (void)serializedObject:(NSMutableDictionary *)object;
 - (void)serializedArray:(NSArray *)array;
 - (id) initWithSession:(DIOSConnect*)aSession;
+
+// new functions added for Three20
+- (void) updateResult:(id) plist;
+-(TTURLRequest *) urlRequestForMethodCall:(id <TTURLRequestDelegate>) delegate;
+
 @end

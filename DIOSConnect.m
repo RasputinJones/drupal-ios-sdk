@@ -239,6 +239,54 @@
   // responseStatusMessage = [requestBinary responseStatusMessage];
 }
 
+-(TTURLRequest *) urlRequestForMethodCall:(id <TTURLRequestDelegate>) delegate {
+    //Key Auth doesnt work in REST services
+    //  NSString *timestamp = [NSString stringWithFormat:@"%d", (long)[[NSDate date] timeIntervalSince1970]];
+    //  NSString *nonce = [self genRandStringLength];
+    //  //removed because we have to regen this every call
+    //  [self removeParam:@"hash"];
+    //  [self addParam:DRUPAL_DOMAIN forKey:@"domain_name"];
+    //  [self removeParam:@"domain_name"];
+    //  [self removeParam:@"domain_time_stamp"];
+    //  [self removeParam:@"nonce"];
+    
+    //  NSString *hashParams = [NSString stringWithFormat:@"%@;%@;%@;%@",timestamp,DRUPAL_DOMAIN,nonce,[self method]];
+    //  [self addParam:[self generateHash:hashParams] forKey:@"hash"];
+    //  [self addParam:DRUPAL_DOMAIN forKey:@"domain_name"];
+    //  [self addParam:timestamp forKey:@"domain_time_stamp"];
+    //  [self addParam:nonce forKey:@"nonce"];
+    
+    [self setError:nil];
+    [self removeParam:@"sessid"];
+    [self addParam:[self sessid] forKey:@"sessid"];
+    
+    NSString *url = [NSString stringWithFormat:@"%@/%@", DRUPAL_SERVICES_URL, [self methodUrl]];
+    
+    // ASIHTTPRequest *requestBinary = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:url]];
+    
+    TTURLRequest *requestBinary = [TTURLRequest requestWithURL:url delegate:delegate];
+    
+    NSString *errorStr;
+    NSData *dataRep = [NSPropertyListSerialization dataFromPropertyList: [self params]
+                                                                 format: NSPropertyListBinaryFormat_v1_0
+                                                       errorDescription: &errorStr];
+    if([[self requestMethod] isEqualToString:@"POST"] || [[self requestMethod] isEqualToString:@"PUT"]) {
+        requestBinary.httpBody = dataRep;
+    }
+    
+    requestBinary.httpMethod = [self requestMethod];
+    [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Content-Type"];
+    [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Accept"];
+    
+    // [requestBinary setTimeOutSeconds:300]; <- standard timeout in TTURLLand is 300ms so no need for this
+    // [requestBinary setShouldRedirect:NO]; <- there will be redirecting
+    // [requestBinary setUploadProgressDelegate:progressDelegate]; <- no upload progresss at least not this way
+    
+    return requestBinary;
+    
+    // responseStatusMessage = [requestBinary responseStatusMessage];
+}
+
 - (void) setMethod:(NSString *)aMethod {
   method = aMethod;
   if([params objectForKey:@"method"] == nil) {

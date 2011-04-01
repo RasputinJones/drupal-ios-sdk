@@ -42,22 +42,20 @@
   [super init];
   return self;
 }
-- (NSDictionary *) loginWithUsername:(NSString*)userName andPassword:(NSString*)password {
+- (TTURLRequest *) loginWithUsername:(NSString*)userName andPassword:(NSString*)password delegate:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.login"];
   [self setMethodUrl:@"user/login"];
   [self addParam:userName forKey:@"username"];
   [self addParam:password forKey:@"password"];
-  [self runMethod];
-  return [self connResult];
+    return [self urlRequestForMethodCall:delegate];
 }
 
-- (NSDictionary *) logout {
+- (TTURLRequest *) logout:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.logout"];
   [self setMethodUrl:@"user/logout"];
-  [self runMethod];
-  return [self connResult];
+  return [self urlRequestForMethodCall:delegate];
 }
-- (NSDictionary *) userSave:(NSMutableDictionary *)userDict {
+- (TTURLRequest *) userSave:(NSMutableDictionary *)userDict delegate:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.save"];
   [self setMethodUrl:@"user"];
   if ([userDict objectForKey:@"uid"] != nil && ![[userDict objectForKey:@"uid"] isEqualToString:@""]) {
@@ -69,22 +67,21 @@
     [self addParam:userDict forKey:@"account"];
   }
   
-  [self runMethod];
-  return [self connResult];
+  return [self urlRequestForMethodCall:delegate];
 }
-- (NSDictionary *) userGet:(NSString*)uid {
+
+- (TTURLRequest *) userGet:(NSString*)uid:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.get"];
   [self setRequestMethod:@"GET"];
   [self setMethodUrl:[NSString stringWithFormat:@"user/%@", uid]];
-  [self runMethod];
-  
-  return [self connResult];
+    
+  return [self urlRequestForMethodCall:delegate];
 }
-- (NSDictionary *) userDelete:(NSString*)uid {
+
+- (TTURLRequest *) userDelete:(NSString*)uid:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.delete"];
   [self setRequestMethod:@"DELETE"];
   [self setMethodUrl:[NSString stringWithFormat:@"user/%@", uid]];
-  [self runMethod];
-  return [self connResult];
+  return [self urlRequestForMethodCall:delegate];
 }
 @end
