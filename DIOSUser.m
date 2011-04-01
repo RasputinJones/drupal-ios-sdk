@@ -38,39 +38,36 @@
 
 
 @implementation DIOSUser
+
 -(id) init {
   [super init];
   return self;
 }
-- (NSDictionary *) loginWithUsername:(NSString*)userName andPassword:(NSString*)password {
+
+- (TTURLRequest *) loginWithUsername:(NSString*)userName andPassword:(NSString*)password delegate:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.login"];
   [self addParam:userName forKey:@"username"];
   [self addParam:password forKey:@"password"];
-  [self runMethod];
-  return [self connResult];
+  return [self urlRequestForMethodCall:delegate];
 }
 
-- (NSDictionary *) logout {
+- (TTURLRequest *) logout:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.logout"];
-  [self runMethod];
-  return [self connResult];
+  return [self urlRequestForMethodCall:delegate];
 }
-- (NSDictionary *) userSave:(NSMutableDictionary *)userDict {
+- (TTURLRequest *) userSave:(NSMutableDictionary *)userDict delegate:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.save"];
   [self addParam:userDict forKey:@"account"];
-  [self runMethod];
-  return [self connResult];
+  return [self urlRequestForMethodCall:delegate];
 }
-- (NSDictionary *) userGet:(NSString*)uid {
+- (TTURLRequest *) userGet:(NSString*)uid:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.get"];
   [self addParam:uid forKey:@"uid"];
-  [self runMethod];
-  return [self connResult];
+  return [self urlRequestForMethodCall:delegate];
 }
-- (NSDictionary *) userDelete:(NSString*)uid {
+- (TTURLRequest *) userDelete:(NSString*)uid:(id<TTURLRequestDelegate>) delegate {
   [self setMethod:@"user.delete"];
   [self addParam:uid forKey:@"uid"];
-  [self runMethod];
-  return [self connResult];
+  return [self urlRequestForMethodCall:delegate];
 }
 @end
