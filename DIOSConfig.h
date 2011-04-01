@@ -48,22 +48,26 @@
 #define DRUPAL_API_KEY  @"9fae43276b95f36156e143e6ddba2282"
 #define DRUPAL_SERVICES_URL  @"http://aflickatest.kicks-ass.net/services/plist"
 #define DRUPAL_URL  @"http://aflickatest.kicks-ass.net/"
-#define DRUPAL_DOMAIN @"aflickatest.kicks-ass.net" 
+#define DRUPAL_DOMAIN @"aflickatest.kicks-ass.net"
+#define DRUPAL_CONNECTION_DOMAIN DRUPAL_DOMAIN
 
 #endif
 
 #ifdef DEV
 
 #define DRUPAL_API_KEY  @"9fae43276b95f36156e143e6ddba2282"
-#define DRUPAL_SERVICES_URL  @"http://localhost:10088/drupal/services/plist"
 
 #if TARGET_IPHONE_SIMULATOR
+    #define DRUPAL_SERVICES_URL  @"http://localhost:10088/drupal/services/plist"
     #define DRUPAL_URL  @"http://localhost:10088/drupal/"
+    #define DRUPAL_CONNECTION_DOMAIN @"localhost" 
 #elif TARGET_OS_IPHONE
+    #define DRUPAL_SERVICES_URL  @"http://10.0.1.22:10088/drupal/services/plist"
     #define DRUPAL_URL  @"http://10.0.1.22:10088/drupal/"
+    #define DRUPAL_CONNECTION_DOMAIN @"TweedleDee.local"
 #endif
 
-#define DRUPAL_DOMAIN @"localhost" 
+#define DRUPAL_DOMAIN @"localhost"
 
 #endif
 

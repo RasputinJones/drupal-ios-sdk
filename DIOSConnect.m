@@ -39,6 +39,7 @@
 #import "DIOSConnect.h"
 // #import "ASIHTTPRequest.h"
 #import "Three20/Three20.h"
+#import "TTURLPlistResponse.h"
 #import "Three20Core/NSStringAdditions.h"
 #import "ASIFormDataRequest.h"
 #import "NSData+Base64.h"
@@ -126,39 +127,13 @@
 }
 
 - (void)requestDidFinishLoad:(TTURLRequest*)request {
-    TTURLDataResponse* dataResponse = (TTURLDataResponse*)request.response;
-    NSString *errorStr;
+    TTURLPlistResponse* response = (TTURLPlistResponse*)request.response;
+    TTDASSERT([response.plist isKindOfClass:[NSDictionary class]]);
     
     error = NO;
     
     if (!error) {
-        NSData *response = dataResponse.data;
-        
-		// NSData *response = [requestBinary responseData];
-		
-		NSPropertyListFormat format;
-		id plist = nil;
-		
-		// [self setResponseStatusMessage:[requestBinary responseStatusMessage]];
-		
-		if(response != nil) {
-			plist = [NSPropertyListSerialization propertyListFromData:response
-													 mutabilityOption:NSPropertyListMutableContainersAndLeaves
-															   format:&format
-													 errorDescription:&errorStr];
-            if (errorStr) {
-                NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
-                                                 code:1 
-                                             userInfo:[NSDictionary dictionaryWithObject:errorStr forKey:NSLocalizedDescriptionKey]];
-                [self setError:e];
-            }
-            
-        } else {
-            NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
-											 code:1 
-										 userInfo:[NSDictionary dictionaryWithObject:@"I couldnt get a response, is the site down?" forKey:NSLocalizedDescriptionKey]];
-            [self setError:e];
-        }
+        id plist = response.plist;
         
         if (plist && !error) {
 			[self setConnResult:plist];
@@ -184,10 +159,34 @@
     }
 }
 
+-(void) updateResult:(id) plist
+{
+    [self setConnResult:plist];
+    if([[self method] isEqualToString:@"system.connect"]) {
+        if(plist != nil) {
+            [self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+            [self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+        }
+    }
+    if([[self method] isEqualToString:@"user.login"]) {
+        if(plist != nil) {
+            [self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+            [self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+        }
+    }
+    if([[self method] isEqualToString:@"user.logout"]) {
+        if(plist != nil) {
+            [self setSessid:nil];
+            [self setUserInfo:nil];
+        }
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 - (void)request:(TTURLRequest*)request didFailLoadWithError:(NSError*)err {
     [self setError:err];
+    TTAlert(@"Unable to connect to Aflicka");
 }
 
 
@@ -222,14 +221,52 @@
 	
     requestBinary.httpMethod = @"POST";
     requestBinary.httpBody = dataRep;
-//    [requestBinary setValue:@"deflate" forHTTPHeaderField:@"Accept-Encoding"]; //<- only deflate seems to work on this server with NSURLRequest
     [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Content-Type"];
     [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Accept"];
     
-    requestBinary.response = [[[TTURLDataResponse alloc] init] autorelease];
+    requestBinary.response = [[[TTURLPlistResponse alloc] init] autorelease];
     
     // [requestBinary.delegates addObject:progressDelegate];
     [requestBinary sendSynchronously];
+}
+
+-(TTURLRequest *) urlRequestForMethodCall:(id <TTURLRequestDelegate>) delegate {
+    [self setError:nil];
+	
+	NSString *timestamp = [NSString stringWithFormat:@"%d", (long)[[NSDate date] timeIntervalSince1970]];
+	NSString *nonce = [self genRandStringLength];
+	//removed because we have to regen this every call
+	[self removeParam:@"hash"];
+	[self addParam:DRUPAL_DOMAIN forKey:@"domain_name"];
+	[self removeParam:@"domain_name"];
+	[self removeParam:@"domain_time_stamp"];
+	[self removeParam:@"nonce"];
+	[self removeParam:@"sessid"];
+	NSString *hashParams = [NSString stringWithFormat:@"%@;%@;%@;%@",timestamp,DRUPAL_DOMAIN,nonce,[self method]];
+	[self addParam:[self generateHash:hashParams] forKey:@"hash"];
+	[self addParam:DRUPAL_DOMAIN forKey:@"domain_name"];
+	[self addParam:timestamp forKey:@"domain_time_stamp"];
+	[self addParam:nonce forKey:@"nonce"];
+	[self addParam:[self sessid] forKey:@"sessid"];
+	
+	NSString *url = [NSString stringWithFormat:@"%@/%@", DRUPAL_SERVICES_URL, [self method]];
+	
+    TTURLRequest *requestBinary = [TTURLRequest requestWithURL:url delegate:delegate];
+    
+	NSString *errorStr;
+	NSData *dataRep = [NSPropertyListSerialization dataFromPropertyList: [self params]
+																 format: NSPropertyListBinaryFormat_v1_0
+													   errorDescription: &errorStr];
+	
+    requestBinary.httpMethod = @"POST";
+    requestBinary.httpBody = dataRep;
+    [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Content-Type"];
+    [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Accept"];
+    
+    requestBinary.response = [[[TTURLPlistResponse alloc] init] autorelease];
+    // [requestBinary.delegates addObject:progressDelegate];
+    
+    return requestBinary;
 }
 
 - (void) setMethod:(NSString *)aMethod {

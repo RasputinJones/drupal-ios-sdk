@@ -36,6 +36,7 @@
 // ***** END LICENSE BLOCK *****
 #import <Foundation/Foundation.h>
 #import "DIOSConfig.h"
+#import "Three20/Three20.h"
 
 @interface DIOSConnect : NSObject {
 	NSDictionary *connResult;
@@ -65,12 +66,14 @@
 - (void) initWithSessId:(NSString*)aSessId;
 - (void) initWithUserInfo:(NSDictionary*)someUserInfo andSessId:(NSString*)sessId;
 - (void) runMethod;
+-(TTURLRequest *) urlRequestForMethodCall:(id <TTURLRequestDelegate>) delegate;
 - (void) addParam:(id)value forKey:(NSString *)key;
 - (void) removeParam:(NSString *)key;
 - (void) connect;
 - (NSDictionary *) loginWithUsername:(NSString*)userName andPassword:(NSString*)password;
 - (NSDictionary *) logout;
 - (void) connect;
+- (void) updateResult:(id) plist;
 - (NSString *) buildParams;
 - (NSString *) genRandStringLength;
 - (NSString *)generateHash:(NSString *)inputString;
