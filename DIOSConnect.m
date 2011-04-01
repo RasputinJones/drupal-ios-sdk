@@ -37,8 +37,10 @@
 #import <CommonCrypto/CommonHMAC.h> //for kCCHmacAlgSHA256
 #import <CommonCrypto/CommonDigest.h> //for CC_SHA256_DIGEST_LENGTH
 #import "DIOSConnect.h"
-#import "ASIHTTPRequest.h"
-#import "ASIFormDataRequest.h"
+// #import "ASIHTTPRequest.h"
+// #import "ASIFormDataRequest.h"
+#import "Three20/Three20.h"
+#import "TTURLPlistResponse.h"
 #import "NSData+Base64.h"
 #import "DIOSConfig.h"
 @implementation DIOSConnect
@@ -126,6 +128,68 @@
   }
 }
 
+- (void)requestDidFinishLoad:(TTURLRequest*)request {
+    TTURLPlistResponse* response = (TTURLPlistResponse*)request.response;
+    TTDASSERT([response.plist isKindOfClass:[NSDictionary class]]);
+    
+    error = NO;
+    
+    if (!error) {
+        id plist = response.plist;
+        
+        if (plist && !error) {
+			[self setConnResult:plist];
+			if([[self method] isEqualToString:@"system.connect"]) {
+				if(plist != nil) {
+					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+				}
+			}
+			if([[self method] isEqualToString:@"user.login"]) {
+				if(plist != nil) {
+					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+				}
+			}
+			if([[self method] isEqualToString:@"user.logout"]) {
+				if(plist != nil) {
+					[self setSessid:nil];
+					[self setUserInfo:nil];
+				}
+			}
+		}
+    }
+}
+
+-(void) updateResult:(id) plist
+{
+    [self setConnResult:plist];
+    if([[self method] isEqualToString:@"system.connect"]) {
+        if(plist != nil) {
+            [self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+            [self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+        }
+    }
+    if([[self method] isEqualToString:@"user.login"]) {
+        if(plist != nil) {
+            [self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
+            [self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+        }
+    }
+    if([[self method] isEqualToString:@"user.logout"]) {
+        if(plist != nil) {
+            [self setSessid:nil];
+            [self setUserInfo:nil];
+        }
+    }
+}
+
+- (void)request:(TTURLRequest*)request didFailLoadWithError:(NSError*)err {
+    [self setError:err];
+    TTAlert(@"Unable to connect to Aflicka");
+    NSLog(@"%@", [error localizedDescription]);
+}
+
 //This runs our method and actually gets a response from drupal
 -(void) runMethod {
   //Key Auth doesnt work in REST services
@@ -150,84 +214,29 @@
   
   NSString *url = [NSString stringWithFormat:@"%@/%@", DRUPAL_SERVICES_URL, [self methodUrl]];
   
-  ASIHTTPRequest *requestBinary = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:url]];
+  // ASIHTTPRequest *requestBinary = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:url]];
+    
+    TTURLRequest *requestBinary = [TTURLRequest requestWithURL:url delegate:self];
   
   NSString *errorStr;
   NSData *dataRep = [NSPropertyListSerialization dataFromPropertyList: [self params]
                                                                format: NSPropertyListBinaryFormat_v1_0
                                                      errorDescription: &errorStr];
   if([[self requestMethod] isEqualToString:@"POST"] || [[self requestMethod] isEqualToString:@"PUT"]) {
-    [requestBinary appendPostData:dataRep];
+      requestBinary.httpBody = dataRep;
   }
-  [requestBinary setRequestMethod:requestMethod];
-  [requestBinary addRequestHeader:@"Content-Type" value:@"application/plist"];
-  [requestBinary addRequestHeader:@"Accept" value:@"application/plist"];
-  [requestBinary setTimeOutSeconds:300];
-  [requestBinary setShouldRedirect:NO];
-  [requestBinary setUploadProgressDelegate:progressDelegate];
-  [requestBinary startSynchronous];
-  responseStatusMessage = [requestBinary responseStatusMessage];
-
-  [self setError:[requestBinary error]];
-  
-  
-  if (!error) {
-    NSData *response = [requestBinary responseData];
     
-    NSPropertyListFormat format;
-    id plist = nil;
+    requestBinary.httpMethod = [self requestMethod];
+    [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Content-Type"];
+    [requestBinary setValue:@"application/plist" forHTTPHeaderField:@"Accept"];
     
-    [self setResponseStatusMessage:[requestBinary responseStatusMessage]];
+    // [requestBinary setTimeOutSeconds:300]; <- standard timeout in TTURLLand is 300ms so no need for this
+    // [requestBinary setShouldRedirect:NO]; <- no redirecting 
+    // [requestBinary setUploadProgressDelegate:progressDelegate]; <- no upload progresss
     
-    if(response != nil) {
-      plist = [NSPropertyListSerialization propertyListFromData:response
-                                               mutabilityOption:NSPropertyListMutableContainersAndLeaves
-                                                         format:&format
-                                               errorDescription:&errorStr];
-      if (errorStr) {
-        NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
-                                         code:1 
-                                     userInfo:[NSDictionary dictionaryWithObject:errorStr forKey:NSLocalizedDescriptionKey]];
-        [self setError:e];
-        NSLog(@"error-response: %@", [requestBinary responseString]);
-      }
-    } else {
-      NSError *e = [NSError errorWithDomain:@"DIOS-Error" 
-                                       code:1 
-                                   userInfo:[NSDictionary dictionaryWithObject:@"I couldnt get a response, is the site down?" forKey:NSLocalizedDescriptionKey]];
-			[self setError:e];
-		}
-		
-		
-		if (plist && !error) {
-			[self setConnResult:plist];
-			if([[self method] isEqualToString:@"system.connect"]) {
-				if(plist != nil) {
-					[self setSessid:[plist objectForKey:@"sessid"]];
-					[self setUserInfo:[plist objectForKey:@"user"]];
-				}
-			}
-			if([[self method] isEqualToString:@"user.login"]) {
-				if(plist != nil) {					
-          [self setSessid:[plist objectForKey:@"sessid"]];
-					[self setUserInfo:[plist objectForKey:@"user"]];
-				}
-			}
-			if([[self method] isEqualToString:@"user.logout"]) {
-				if(plist != nil) {
-					[self setSessid:nil];
-					[self setUserInfo:nil];
-				}
-			}
-		}
-	}
-	
-	if(error) {
-    NSLog(@"%@", [error localizedDescription]);
-  }
-	//Bug in ASIHTTPRequest, put here to stop activity indicator
-	UIApplication* app = [UIApplication sharedApplication];
-	app.networkActivityIndicatorVisible = NO;
+  [requestBinary sendSynchronously];
+    
+  // responseStatusMessage = [requestBinary responseStatusMessage];
 }
 
 - (void) setMethod:(NSString *)aMethod {
