@@ -141,15 +141,14 @@
 			[self setConnResult:plist];
 			if([[self method] isEqualToString:@"system.connect"]) {
 				if(plist != nil) {
-					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
-					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+					[self setSessid:[plist objectForKey:@"sessid"]];
+					[self setUserInfo:[plist objectForKey:@"user"]];
 				}
 			}
 			if([[self method] isEqualToString:@"user.login"]) {
 				if(plist != nil) {
-					[self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
-					[self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
-				}
+					[self setSessid:[plist objectForKey:@"sessid"]];
+					[self setUserInfo:[plist objectForKey:@"user"]];				}
 			}
 			if([[self method] isEqualToString:@"user.logout"]) {
 				if(plist != nil) {
@@ -166,15 +165,14 @@
     [self setConnResult:plist];
     if([[self method] isEqualToString:@"system.connect"]) {
         if(plist != nil) {
-            [self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
-            [self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
+            [self setSessid:[plist objectForKey:@"sessid"]];
+            [self setUserInfo:[plist objectForKey:@"user"]];
         }
     }
     if([[self method] isEqualToString:@"user.login"]) {
         if(plist != nil) {
-            [self setSessid:[[plist objectForKey:@"#data"] objectForKey:@"sessid"]];
-            [self setUserInfo:[[plist objectForKey:@"#data"]objectForKey:@"user"]];
-        }
+            [self setSessid:[plist objectForKey:@"sessid"]];
+            [self setUserInfo:[plist objectForKey:@"user"]];				}
     }
     if([[self method] isEqualToString:@"user.logout"]) {
         if(plist != nil) {
@@ -234,7 +232,9 @@
     // [requestBinary setShouldRedirect:NO]; <- no redirecting 
     // [requestBinary setUploadProgressDelegate:progressDelegate]; <- no upload progresss
     
-  [requestBinary sendSynchronously];
+    requestBinary.response = [[[TTURLPlistResponse alloc] init] autorelease];
+    
+    [requestBinary sendSynchronously];
     
   // responseStatusMessage = [requestBinary responseStatusMessage];
 }
@@ -261,8 +261,6 @@
     [self addParam:[self sessid] forKey:@"sessid"];
     
     NSString *url = [NSString stringWithFormat:@"%@/%@", DRUPAL_SERVICES_URL, [self methodUrl]];
-    
-    // ASIHTTPRequest *requestBinary = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:url]];
     
     TTURLRequest *requestBinary = [TTURLRequest requestWithURL:url delegate:delegate];
     

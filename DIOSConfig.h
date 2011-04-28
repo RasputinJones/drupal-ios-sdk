@@ -36,34 +36,37 @@
 // ***** END LICENSE BLOCK *****
 
 //#define STAGE
-#define DEV
 
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
+
+#define DEV
 
 #ifdef STAGE
 
-#define DRUPAL_API_KEY  @""
-#define DRUPAL_SERVICES_URL  @"http://stage.example.com/services/plist"
-#define DRUPAL_URL  @"http://stage.example.com"
-#define DRUPAL_DOMAIN @"stage.example.com" 
+#define DRUPAL_API_KEY  @"9fae43276b95f36156e143e6ddba2282"
+#define DRUPAL_SERVICES_URL  @"http://aflickatest.kicks-ass.net/services/plist"
+#define DRUPAL_URL  @"http://aflickatest.kicks-ass.net/"
+#define DRUPAL_DOMAIN @"aflickatest.kicks-ass.net" 
 
 #endif
 
 #ifdef DEV
 
-#define DRUPAL_API_KEY  @"4b2d7ef98d720386e0d2022842847404"
-#define DRUPAL_SERVICES_URL  @"http://drupal7/test4"
-#define DRUPAL_URL  @"http://demo.kylebrowning.com/"
-#define DRUPAL_DOMAIN @"testing"
-//THis is the constant for none in Drupal7 http://api.drupal.org/api/constant/LANGUAGE_NONE/7
-#define DRUPAL_LANGUAGE @"und"
+#define DRUPAL_API_KEY  @"9fae43276b95f36156e143e6ddba2282"
+#define DRUPAL_SERVICES_URL  @"http://TweedleDee.local/drupal7/rest"
+
+#define DRUPAL_URL  @"http://TweedleDee.local/drupal7/"
+#define DRUPAL_CONNECTION_DOMAIN @"Tweedledee.local"
+
+#define DRUPAL_DOMAIN @"localhost" 
 
 #endif
 
+//These are just constants I found myself defining and most likely do not reflect constants you may need.
 #define DRUPAL_CELL_DEFAULT_IMAGE @"http://demo.kylebrowning.com/sites/default/files/imagecache/iphone/4986607783_45b49e2493_o.jpg"
 #define DRUPAL_IMAGECACHE_URL @"sites/default/files/imagecache/iphone/"
-#define DRUPAL_NC_SYSTEM @"DRUPALNCSYSTEM"
-#define DRUPAL_METHOD_DONE @"DRUPALMETHODDONE"
-#define DRUPAL_NODE_METHOD_DONE @"DRUPALNODEMETHODDONE"
 #define DRUPAL_CATEGORY_VID @"1"
 #define DRUPAL_VIEWS_IMAGE_FIELD @"files_node_data_field_image_filepath"
 #define DRUPAL_NODE_IMAGE_FIELD @"field_image"

@@ -47,7 +47,7 @@
   [self setMethodUrl:@"user/login"];
   [self addParam:userName forKey:@"username"];
   [self addParam:password forKey:@"password"];
-    return [self urlRequestForMethodCall:delegate];
+  return [self urlRequestForMethodCall:delegate];
 }
 
 - (TTURLRequest *) logout:(id<TTURLRequestDelegate>) delegate {
