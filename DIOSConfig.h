@@ -54,13 +54,17 @@
 
 #ifdef DEV
 
+<<<<<<< HEAD
 #define DRUPAL_API_KEY  @"9fae43276b95f36156e143e6ddba2282"
 #define DRUPAL_SERVICES_URL  @"http://TweedleDee.local/drupal7/rest"
 
 #define DRUPAL_URL  @"http://TweedleDee.local/drupal7/"
 #define DRUPAL_CONNECTION_DOMAIN @"Tweedledee.local"
 
-#define DRUPAL_DOMAIN @"localhost" 
+#define DRUPAL_DOMAIN @"localhost"
+
+//THis is the constant for none in Drupal7 http://api.drupal.org/api/constant/LANGUAGE_NONE/7
+#define DRUPAL_LANGUAGE @"und"
 
 #endif
 
